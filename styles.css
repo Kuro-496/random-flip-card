@@ -889,82 +889,327 @@ kbd {
   }
 }
 
-/* ============================================================
-   GACHA ANIMATION STYLES
-   All rules below power the Gacha Summoning draw sequence.
-============================================================ */
+/* ===========================================================
+   CINEMATIC GACHA v2
+   Overlay + Luxury Flying Card + Edge Particles
+   Replaces the old inline-card animation system.
+=========================================================== */
 
-/* Canvas layers – fixed, transparent, pointer-events none */
+/* ── Card Slot: remove permanent dashed frame ────────────── */
+/* The drop-zone visual is now shown only on hover/drag-over  */
+.card-slot {
+  border-color: transparent;
+  background-color: transparent;
+}
+.card-slot.drag-over {
+  border-color: var(--accent);
+  background-color: var(--accent-light);
+}
+/* Old drop-zone placeholder no longer needed */
+.slot-placeholder { display: none !important; }
+
+/* ── Canvas layers ────────────────────────────────────────── */
 #trail-canvas {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 15;   /* in front of main content, behind card */
+  z-index: 15;
 }
-
 #particle-canvas {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 25;   /* always on top during burst */
+  z-index: 25;
 }
 
-/* Full-screen white flash on impact */
+/* ── Full-screen white flash on impact ───────────────────── */
 #flash-overlay {
   position: fixed;
   inset: 0;
   background: #fff;
-  z-index: 100;
+  z-index: 200;
   opacity: 0;
   pointer-events: none;
 }
-
-#flash-overlay.flash {
-  animation: do-flash 0.42s ease-out forwards;
-}
-
+#flash-overlay.flash { animation: do-flash 0.42s ease-out forwards; }
 @keyframes do-flash {
-  0%   { opacity: 0.9; }
-  25%  { opacity: 0.75; }
-  100% { opacity: 0; }
+  0%   { opacity: 0.90; }
+  25%  { opacity: 0.72; }
+  100% { opacity: 0;    }
 }
 
-/* Screen shake – applied to .arena during impact */
-.arena.shake {
-  animation: screen-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
+/* ── Screen shake ─────────────────────────────────────────── */
+.arena.shake { animation: screen-shake 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 @keyframes screen-shake {
-  10%, 90%        { transform: translate(-3px,  1px); }
-  20%, 80%        { transform: translate( 4px, -2px); }
-  30%, 50%, 70%   { transform: translate(-5px,  2px); }
-  40%, 60%        { transform: translate( 5px, -1px); }
-  100%            { transform: translate(0, 0); }
+  10%, 90%      { transform: translate(-3px,  1px); }
+  20%, 80%      { transform: translate( 4px, -2px); }
+  30%, 50%, 70% { transform: translate(-5px,  2px); }
+  40%, 60%      { transform: translate( 5px, -1px); }
+  100%          { transform: translate(0, 0); }
 }
 
-/* Allow card to escape its container during gacha flight */
-.arena.gacha-active,
-.main-content.gacha-active {
-  overflow: visible !important;
+/* ── Cinematic Dark Overlay ──────────────────────────────── */
+#gacha-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 5, 15, 0.88);
+  z-index: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+#gacha-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
-/* Glow ring that pulses on the card after landing */
-.flip-card.glow-card {
-  border-radius: var(--radius-lg);
-  animation: pulse-glow-card 1.8s ease-in-out infinite alternate;
+/* ── Luxury Flying Card (outer wrapper) ──────────────────── */
+#gacha-fly-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 260px;
+  height: 370px;
+  /* JS overrides this with translate3d during animation;
+     after animation is cancelled the CSS default restores centering */
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+  perspective: 1100px;
+  z-index: 9999;
+  display: none;
+  will-change: transform, opacity, filter;
+  cursor: pointer;
+  user-select: none;
 }
+#gacha-fly-card.active { display: block; }
 
-@keyframes pulse-glow-card {
+/* Pulsing glow after card lands */
+#gacha-fly-card.glow-fly {
+  animation: glow-fly-pulse 1.6s ease-in-out infinite alternate;
+}
+@keyframes glow-fly-pulse {
   from {
-    box-shadow:
-      0  0  18px  4px rgba(2, 132, 199, 0.55),
-      0  0  40px 10px rgba(2, 132, 199, 0.30);
+    filter: drop-shadow(0 0 18px rgba(2,  132, 199, 0.70))
+            drop-shadow(0 0 40px rgba(56, 189, 248, 0.28));
   }
   to {
-    box-shadow:
-      0  0  30px  8px rgba(2, 132, 199, 0.90),
-      0  0  65px 20px rgba(56, 189, 248, 0.55),
-      0  0 110px 35px rgba(2, 132, 199, 0.20);
+    filter: drop-shadow(0 0 38px rgba(2,  132, 199, 1.00))
+            drop-shadow(0 0 90px rgba(56, 189, 248, 0.58));
   }
 }
 
+/* ── Inner 3D flip container ─────────────────────────────── */
+#gacha-fly-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);        /* default → BACK (mystery) visible  */
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* Gacha flip: shows FRONT face (first card content) */
+#gacha-fly-inner.revealed {
+  transform: rotateY(180deg);
+}
+/* User flip: shows BACK face again (now with second card content) */
+#gacha-fly-inner.revealed.user-flipped {
+  transform: rotateY(360deg);
+}
+
+/* ── BACK FACE (outer shell) ─────────────────────────────── */
+#gacha-fly-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* Mystery design layer (shown during flight) */
+#fly-mystery-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: radial-gradient(circle at 35% 28%, #1e0845 0%, #09031e 55%, #020009 100%);
+  border: 2px solid rgba(167, 93, 255, 0.75);
+  box-shadow:
+    inset 0 0 55px rgba(124, 58, 237, 0.28),
+    0 0 40px rgba(124, 58, 237, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+#fly-mystery-layer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(167, 93, 255, 0.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.fly-seal-ring {
+  width: 88px;
+  height: 88px;
+  border: 2px solid rgba(167, 93, 255, 0.45);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fly-seal-spin 8s linear infinite;
+  filter: drop-shadow(0 0 14px rgba(167, 93, 255, 0.8));
+}
+@keyframes fly-seal-spin { to { transform: rotate(360deg); } }
+.fly-seal-icon { font-size: 2.8rem; color: rgba(196, 148, 255, 0.9); line-height: 1; }
+
+.fly-unknown-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.24em;
+  color: rgba(196, 148, 255, 0.8);
+  text-transform: uppercase;
+  margin: 0;
+}
+.fly-mystery-stars {
+  font-size: 1rem;
+  color: #ffe066;
+  letter-spacing: 3px;
+  filter: drop-shadow(0 0 5px rgba(255, 224, 102, 0.65));
+  margin: 0;
+}
+
+/* Second-face content (replaces mystery after user's first flip) */
+#fly-second-content {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(145deg, #071428 0%, #0c1f3f 40%, #081630 70%, #060f22 100%);
+  border: 2px solid rgba(56, 189, 248, 0.75);
+  box-shadow:
+    0 0 28px rgba(2, 132, 199, 0.55),
+    inset 0 0 30px rgba(56, 189, 248, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 22px;
+  color: #fff;
+  overflow: hidden;
+}
+#fly-second-content[hidden] { display: none !important; }
+
+/* ── FRONT FACE (first card content, revealed after gacha flip) ── */
+#gacha-fly-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* Sits at 180° so it's hidden by default, visible when inner is .revealed */
+  transform: rotateY(180deg);
+  background: linear-gradient(145deg, #071428 0%, #0c1f3f 40%, #081630 70%, #060f22 100%);
+  border: 2px solid rgba(56, 189, 248, 0.78);
+  box-shadow:
+    0 0 28px rgba(2, 132, 199, 0.58),
+    0 0 65px rgba(2, 132, 199, 0.22),
+    inset 0 0 35px rgba(56, 189, 248, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 22px;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Travelling shimmer on both content faces */
+#gacha-fly-front::before,
+#fly-second-content::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: linear-gradient(
+    110deg,
+    transparent          20%,
+    rgba(56,189,248,.10) 45%,
+    rgba(255,255,255,.16) 50%,
+    rgba(56,189,248,.10) 55%,
+    transparent          80%
+  );
+  background-size: 200% 100%;
+  animation: fly-shimmer 2.8s linear infinite;
+  pointer-events: none;
+}
+@keyframes fly-shimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ── Content face typography ──────────────────────────────── */
+.fly-face-label {
+  font-size: 0.60rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: rgba(56, 189, 248, 0.52);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.fly-face-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  color: #ffffff;
+  word-break: break-word;
+  text-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 230px;
+  overflow-y: auto;
+  padding: 0 4px;
+}
+.fly-face-hint {
+  font-size: 0.60rem;
+  letter-spacing: 0.11em;
+  color: rgba(56, 189, 248, 0.35);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ── Corner ornaments ─────────────────────────────────────── */
+.fly-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-style: solid;
+  pointer-events: none;
+}
+.fly-corner.tl { top: 10px;    left: 10px;  border-width: 2px 0 0 2px; }
+.fly-corner.tr { top: 10px;    right: 10px; border-width: 2px 2px 0 0; }
+.fly-corner.bl { bottom: 10px; left: 10px;  border-width: 0 0 2px 2px; }
+.fly-corner.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+/* Purple: mystery face */
+#fly-mystery-layer .fly-corner { border-color: rgba(167, 93, 255, 0.42); }
+/* Blue: content faces */
+#gacha-fly-front    .fly-corner,
+#fly-second-content .fly-corner { border-color: rgba(56, 189, 248, 0.38); }
+
+/* ── Action buttons floating above overlay (gacha-revealed state) */
+.action-buttons.gacha-mode {
+  position: fixed !important;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%) !important;
+  z-index: 9999;
+  width: 300px;
+  display: flex;
+}
+
+/* end of stylesheet */

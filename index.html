@@ -154,9 +154,58 @@ Tạm biệt/Goodbye" spellcheck="false"></textarea>
     </main>
   </div>
 
-  <!-- Gacha: Motion Trail Canvas (behind card) -->
+  <!-- ── Cinematic dark overlay (covers sidebar & UI during draw) ── -->
+  <div id="gacha-overlay"></div>
+
+  <!-- ── Luxury flying card – animated by JS during draw sequence ── -->
+  <div id="gacha-fly-card">
+    <div id="gacha-fly-inner">
+
+      <!-- BACK FACE: purple mystery design shown during flight.
+           After the user clicks to flip, #fly-mystery-layer hides
+           and #fly-second-content appears in its place. -->
+      <div id="gacha-fly-back">
+
+        <div id="fly-mystery-layer">
+          <div class="fly-corner tl"></div>
+          <div class="fly-corner tr"></div>
+          <div class="fly-corner bl"></div>
+          <div class="fly-corner br"></div>
+          <div class="fly-seal-ring"><span class="fly-seal-icon">⚝</span></div>
+          <p class="fly-unknown-label">UNKNOWN</p>
+          <p class="fly-mystery-stars">★★★★★</p>
+        </div>
+
+        <!-- Second-face card content (hidden until user flips) -->
+        <div id="fly-second-content" hidden>
+          <div class="fly-corner tl"></div>
+          <div class="fly-corner tr"></div>
+          <div class="fly-corner bl"></div>
+          <div class="fly-corner br"></div>
+          <span class="fly-face-label" id="fly-second-label">MẶT SAU</span>
+          <div class="fly-face-text"  id="fly-second-text">—</div>
+          <span class="fly-face-hint">Click để lật</span>
+        </div>
+
+      </div>
+
+      <!-- FRONT FACE: first-face content, revealed after gacha flip -->
+      <div id="gacha-fly-front">
+        <div class="fly-corner tl"></div>
+        <div class="fly-corner tr"></div>
+        <div class="fly-corner bl"></div>
+        <div class="fly-corner br"></div>
+        <span class="fly-face-label" id="fly-first-label">MẶT TRƯỚC</span>
+        <div class="fly-face-text"  id="fly-first-text">—</div>
+        <span class="fly-face-hint">Click để lật</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Gacha: Motion Trail Canvas (behind everything during flight) -->
   <canvas id="trail-canvas"></canvas>
-  <!-- Gacha: Particle Explosion Canvas (on top of card) -->
+  <!-- Gacha: Particle Explosion Canvas (always on top during burst) -->
   <canvas id="particle-canvas"></canvas>
   <!-- Gacha: Full-screen white flash overlay -->
   <div id="flash-overlay"></div>
