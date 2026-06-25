@@ -7,7 +7,6 @@ let isProgrammaticChange = false;
 
 // DOM Elements
 const cardInput = document.getElementById('card-input');
-const validationInfo = document.getElementById('validation-info');
 const sidebar = document.getElementById('sidebar');
 const hideSidebarBtn = document.getElementById('hide-sidebar-btn');
 const showSidebarBtn = document.getElementById('show-sidebar-btn');
@@ -111,7 +110,6 @@ function parseCards() {
   }
 
   updateCounterStats();
-  updateValidationBadge(blankLinesCount, invalidFormatCount);
 }
 
 function updateUIForEmptyDeck() {
@@ -119,9 +117,6 @@ function updateUIForEmptyDeck() {
   remainingCount.textContent = '0';
   deckPile.classList.add('empty');
   clearActiveCard();
-  
-  validationInfo.className = 'validation-info error';
-  validationInfo.textContent = 'Chưa có thẻ. Hãy nhập thông tin thẻ ở trên.';
 }
 
 function updateCounterStats() {
@@ -132,21 +127,6 @@ function updateCounterStats() {
     deckPile.classList.add('empty');
   } else {
     deckPile.classList.remove('empty');
-  }
-}
-
-function updateValidationBadge(blanks, invalids) {
-  if (deck.length === 0) {
-    updateUIForEmptyDeck();
-    return;
-  }
-
-  if (blanks > 0 || invalids > 0) {
-    validationInfo.className = 'validation-info warning';
-    validationInfo.innerHTML = `Đã nạp <strong>${deck.length}</strong> thẻ.<br>Lưu ý: Có ${blanks} dòng trống & ${invalids} dòng thiếu dấu / (được coi là mặt trống).`;
-  } else {
-    validationInfo.className = 'validation-info success';
-    validationInfo.innerHTML = `Đã nạp thành công <strong>${deck.length}</strong> thẻ hoạt động.`;
   }
 }
 
@@ -398,13 +378,17 @@ function setupEventListeners() {
 
     const key = e.key;
 
-    if (key === ' ') {
-      // Space -> Draw card (if slot empty) or flip card (if slot active)
+    if (key === 'Enter') {
+      // Enter -> Draw card
       e.preventDefault();
-      if (activeIndexIndex === null) {
-        drawCard();
-      } else {
+      drawCard();
+    } else if (key === ' ') {
+      // Space -> Flip card
+      e.preventDefault();
+      if (activeIndexIndex !== null) {
         toggleFlip();
+      } else {
+        showToast('Hãy rút thẻ trước', 'warning');
       }
     } else if (key === 'ArrowLeft' || key.toLowerCase() === 'k') {
       // Left arrow / K -> Keep card
@@ -430,7 +414,11 @@ function init() {
   
   // Set default cards if text area is empty
   if (!cardInput.value.trim()) {
-    cardInput.value = `Xin chào/Hello\nCảm ơn/Thank you\nTạm biệt/Goodbye\nTrái táo/Apple\nQuả chuối/Banana\nXe máy/Motorcycle\n/Mặt trước trống\nMặt sau trống/\n\nLỗi định dạng không có gạch chéo`;
+    cardInput.value = `Cảm ơn/Thank you
+Tạm biệt/Goodbye
+Trái táo/Apple
+Quả chuối/Banana
+Xe máy/Motorcycle`;
   }
   
   parseCards();

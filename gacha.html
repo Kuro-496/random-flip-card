@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gacha Summoning – RuKuroFlip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       BASE & RESET
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0a16;
+      --gold-1:      #ffe066;
+      --gold-2:      #ffb300;
+      --gold-3:      #ff8800;
+      --purple-1:    #c084fc;
+      --purple-2:    #7c3aed;
+      --star-color:  #ffe566;
+      --card-w:      240px;
+      --card-h:      340px;
+    }
+
+    body {
+      background: var(--bg);
+      color: #fff;
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* ============================================================
+       AMBIENT BACKGROUND  – starfield layer
+    ============================================================ */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       SCREEN SHAKE WRAPPER
+    ============================================================ */
+    #scene {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    #scene.shake {
+      animation: screen-shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes screen-shake {
+      10%, 90%  { transform: translate(-3px, 1px) rotate(-0.4deg); }
+      20%, 80%  { transform: translate( 4px,-2px) rotate( 0.5deg); }
+      30%, 50%, 70% { transform: translate(-5px, 2px) rotate(-0.3deg); }
+      40%, 60%  { transform: translate( 5px,-1px) rotate( 0.3deg); }
+      100%      { transform: translate(0, 0); }
+    }
+
+    /* ============================================================
+       TITLE
+    ============================================================ */
+    .title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      letter-spacing: 0.1em;
+      background: linear-gradient(135deg, var(--gold-1), var(--gold-2), var(--purple-1));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      filter: drop-shadow(0 0 12px rgba(255,224,102,0.4));
+      user-select: none;
+    }
+
+    /* ============================================================
+       CARD STAGE  – perspective container
+    ============================================================ */
+    #card-stage {
+      position: relative;
+      width: var(--card-w);
+      height: var(--card-h);
+      perspective: 900px;
+    }
+
+    /* ============================================================
+       CANVAS LAYERS  – behind and in-front of card
+    ============================================================ */
+    #trail-canvas, #particle-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    /* Particles always on top */
+    #particle-canvas { z-index: 5; }
+
+    /* ============================================================
+       THE CARD  (3-D wrapper + front + back)
+    ============================================================ */
+    #card-wrapper {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      position: relative;
+      /* Initial state: hidden, below viewport */
+      opacity: 0;
+      transform: translateY(200px) scale(0.5) rotateY(0deg);
+      will-change: transform, opacity, filter;
+      border-radius: 18px;
+      /* Glow rings – revealed after landing */
+      box-shadow: none;
+      transition: box-shadow 0.6s ease;
+    }
+
+    #card-wrapper.glow {
+      box-shadow:
+        0  0  18px  4px rgba(255,224,102,0.7),
+        0  0  45px 12px rgba(255,179,  0,0.5),
+        0  0  90px 24px rgba(124, 58,237,0.3);
+      animation: pulse-glow 1.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-glow {
+      from { box-shadow: 0  0  18px  4px rgba(255,224,102,0.7), 0  0  45px 12px rgba(255,179,0,0.5), 0 0 90px 24px rgba(124,58,237,0.3); }
+      to   { box-shadow: 0  0  30px  8px rgba(255,224,102,1.0), 0  0  70px 20px rgba(255,179,0,0.8), 0 0 140px 40px rgba(124,58,237,0.5); }
+    }
+
+    /* -- BACK face (what you see before flip) -- */
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      overflow: hidden;
+      border: 2px solid transparent;
+    }
+
+    /* CARD BACK – mysterious dark face */
+    #card-back {
+      background:
+        radial-gradient(circle at 30% 30%, #1a0a3a 0%, #07051a 60%, #000 100%);
+      border-color: rgba(192,132,252,0.6);
+      box-shadow: inset 0 0 40px rgba(124,58,237,0.3);
+    }
+
+    .back-seal {
+      width: 100px;
+      height: 100px;
+      border: 2px solid rgba(192,132,252,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      animation: rotate-seal 6s linear infinite;
+      filter: drop-shadow(0 0 10px rgba(192,132,252,0.7));
+    }
+
+    @keyframes rotate-seal {
+      to { transform: rotate(360deg); }
+    }
+
+    .back-title {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      color: rgba(192,132,252,0.9);
+      text-transform: uppercase;
+    }
+
+    .back-stars {
+      display: flex;
+      gap: 4px;
+      font-size: 1rem;
+      color: var(--star-color);
+      filter: drop-shadow(0 0 4px rgba(255,229,102,0.6));
+    }
+
+    /* Decorative corner ornaments */
+    .corner {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(192,132,252,0.4);
+      border-style: solid;
+    }
+    .corner.tl { top: 10px; left: 10px;  border-width: 2px 0 0 2px; }
+    .corner.tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; }
+    .corner.bl { bottom: 10px; left: 10px;  border-width: 0 0 2px 2px; }
+    .corner.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
+
+    /* CARD FRONT – SSR gold result */
+    #card-front {
+      transform: rotateY(180deg);
+      background: linear-gradient(
+        145deg,
+        #1a1000 0%,
+        #2d1a00 20%,
+        #4a2800 40%,
+        #1a1000 60%,
+        #3d2000 80%,
+        #0d0800 100%
+      );
+      border-color: var(--gold-2);
+      box-shadow:
+        inset 0 0 30px rgba(255,179,0,0.2),
+        inset 0 0 60px rgba(255,224,102,0.1);
+    }
+
+    /* Shimmering gold overlay inside front face */
+    #card-front::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(
+        110deg,
+        transparent 20%,
+        rgba(255,224,102,0.15) 45%,
+        rgba(255,255,255,0.25) 50%,
+        rgba(255,224,102,0.15) 55%,
+        transparent 80%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 2.5s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -100% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .card-rarity {
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      color: var(--gold-1);
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+
+    .card-art {
+      font-size: 5rem;
+      filter: drop-shadow(0 0 20px rgba(255,200,0,0.8));
+      animation: float-art 3s ease-in-out infinite;
+    }
+
+    @keyframes float-art {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .card-name {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 1rem;
+      text-align: center;
+      line-height: 1.4;
+      background: linear-gradient(180deg, var(--gold-1), var(--gold-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+    }
+
+    .card-stars {
+      display: flex;
+      gap: 3px;
+      font-size: 1.1rem;
+      color: var(--star-color);
+      filter: drop-shadow(0 0 6px rgba(255,229,102,0.9));
+    }
+
+    .card-type {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: rgba(255,179,0,0.7);
+      text-transform: uppercase;
+    }
+
+    .card-divider {
+      width: 70%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-2), transparent);
+    }
+
+    /* ============================================================
+       FLASH OVERLAY  – full-screen white flash on impact
+    ============================================================ */
+    #flash-overlay {
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #flash-overlay.flash {
+      animation: do-flash 0.4s ease-out forwards;
+    }
+
+    @keyframes do-flash {
+      0%   { opacity: 0.95; }
+      30%  { opacity: 0.8; }
+      100% { opacity: 0; }
+    }
+
+    /* ============================================================
+       RESULT LABEL  – fades in after flip completes
+    ============================================================ */
+    #result-label {
+      font-family: 'Cinzel Decorative', serif;
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      letter-spacing: 0.12em;
+      background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      min-height: 2em;
+      text-align: center;
+      filter: drop-shadow(0 0 8px rgba(255,200,0,0.5));
+    }
+
+    #result-label.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ============================================================
+       BUTTON
+    ============================================================ */
+    #spin-btn {
+      position: relative;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #0a0a16;
+      border: none;
+      cursor: pointer;
+      padding: 16px 48px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, var(--gold-1), var(--gold-2), var(--gold-3));
+      box-shadow:
+        0  4px 15px rgba(255,179,0,0.4),
+        0  0   30px rgba(255,179,0,0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      overflow: hidden;
+    }
+
+    #spin-btn::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 50%;
+      height: 200%;
+      background: rgba(255,255,255,0.35);
+      transform: skewX(-20deg);
+      transition: left 0.45s ease;
+    }
+
+    #spin-btn:hover::before { left: 120%; }
+
+    #spin-btn:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 8px 25px rgba(255,179,0,0.6), 0 0 50px rgba(255,179,0,0.3);
+    }
+
+    #spin-btn:active:not(:disabled) {
+      transform: translateY(0) scale(0.97);
+    }
+
+    #spin-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      filter: grayscale(0.4);
+    }
+
+    /* ============================================================
+       FLOATING AMBIENT PARTICLES (CSS only, bg layer)
+    ============================================================ */
+    .ambient-dot {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: ambient-float linear infinite;
+    }
+
+    @keyframes ambient-float {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.6; }
+      100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Starfield canvas (behind everything) -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Canvas for motion trail (z:1, behind scene) -->
+  <canvas id="trail-canvas"></canvas>
+
+  <!-- Canvas for particle explosion (z:5, on top) -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Screen-flash overlay -->
+  <div id="flash-overlay"></div>
+
+  <!-- Main scene (shakeable wrapper) -->
+  <div id="scene">
+    <h1 class="title">✦ Sacred Summon ✦</h1>
+
+    <!-- Perspective stage -->
+    <div id="card-stage">
+      <div id="card-wrapper">
+
+        <!-- BACK FACE -->
+        <div class="card-face" id="card-back">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+          <div class="back-seal">⚝</div>
+          <div class="back-title">Unknown</div>
+          <div class="back-stars">★★★★★</div>
+        </div>
+
+        <!-- FRONT FACE (hidden until flip) -->
+        <div class="card-face" id="card-front">
+          <div class="corner tl"></div>
+          <div class="corner tr"></div>
+          <div class="corner bl"></div>
+          <div class="corner br"></div>
+          <div class="card-rarity">⬡ Siêu Hiếm · SSR</div>
+          <div class="card-art">🌟</div>
+          <div class="card-divider"></div>
+          <div class="card-name">Thiên Long<br>Vô Lượng</div>
+          <div class="card-stars">★★★★★</div>
+          <div class="card-type">Artifact · Huyền Thoại</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="result-label"></div>
+    <button id="spin-btn">✦ Quay Thẻ ✦</button>
+  </div>
+
+  <script>
+  /* ============================================================
+     CANVAS SETUP
+  ============================================================ */
+  const bgCanvas     = document.getElementById('bg-canvas');
+  const trailCanvas  = document.getElementById('trail-canvas');
+  const particleCanvas = document.getElementById('particle-canvas');
+  const bgCtx     = bgCanvas.getContext('2d');
+  const trailCtx  = trailCanvas.getContext('2d');
+  const pCtx      = particleCanvas.getContext('2d');
+
+  function resizeCanvases() {
+    [bgCanvas, trailCanvas, particleCanvas].forEach(c => {
+      c.width  = window.innerWidth;
+      c.height = window.innerHeight;
+    });
+  }
+  resizeCanvases();
+  window.addEventListener('resize', resizeCanvases);
+
+  /* ============================================================
+     STARFIELD  (runs always, bg-canvas)
+  ============================================================ */
+  const STAR_COUNT = 180;
+  const stars = Array.from({ length: STAR_COUNT }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: Math.random() * 1.4 + 0.3,
+    alpha: Math.random(),
+    speed: Math.random() * 0.004 + 0.002,
+  }));
+
+  function drawStarfield() {
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    stars.forEach(s => {
+      s.alpha += s.speed;
+      const a = 0.3 + 0.7 * Math.abs(Math.sin(s.alpha));
+      bgCtx.beginPath();
+      bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      bgCtx.fillStyle = `rgba(255,240,200,${a})`;
+      bgCtx.fill();
+    });
+    requestAnimationFrame(drawStarfield);
+  }
+  drawStarfield();
+
+  /* ============================================================
+     MOTION TRAIL SYSTEM (trail-canvas)
+  ============================================================ */
+  let trailActive = false;
+  let trailIntensity = 0;  // 0-1
+  const cardWrapper = document.getElementById('card-wrapper');
+
+  // We sample card position via getBoundingClientRect each frame
+  const trailHistory = [];
+  const TRAIL_MAX = 22;
+
+  function sampleCardCenter() {
+    const r = cardWrapper.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
+  }
+
+  function drawTrails() {
+    // Fade existing content
+    trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+
+    if (trailActive && trailIntensity > 0) {
+      const pos = sampleCardCenter();
+      trailHistory.push({ ...pos, time: performance.now() });
+      if (trailHistory.length > TRAIL_MAX) trailHistory.shift();
+
+      trailHistory.forEach((p, i) => {
+        const progress = i / TRAIL_MAX;
+        const alpha = progress * trailIntensity * 0.45;
+        const size  = p.w * 0.5 * progress;
+
+        // Gold trail
+        const grd = trailCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size + 20);
+        grd.addColorStop(0,   `rgba(255,220, 50,${alpha})`);
+        grd.addColorStop(0.5, `rgba(200,100,255,${alpha * 0.6})`);
+        grd.addColorStop(1,   `rgba(80, 20,160,0)`);
+        trailCtx.beginPath();
+        trailCtx.arc(p.x, p.y, size + 20, 0, Math.PI * 2);
+        trailCtx.fillStyle = grd;
+        trailCtx.fill();
+      });
+    } else {
+      trailHistory.length = 0;
+    }
+
+    requestAnimationFrame(drawTrails);
+  }
+  drawTrails();
+
+  /* ============================================================
+     PARTICLE EXPLOSION SYSTEM (particle-canvas)
+  ============================================================ */
+  let particles = [];
+
+  function spawnExplosion(cx, cy) {
+    const BURST = 120;
+    for (let i = 0; i < BURST; i++) {
+      const angle  = Math.random() * Math.PI * 2;
+      const speed  = 3 + Math.random() * 11;
+      const isGold = Math.random() < 0.55;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.022,
+        r:  2 + Math.random() * 5,
+        color: isGold
+          ? `rgba(255,${180 + Math.random() * 75 | 0},0,`
+          : `rgba(${160 + Math.random() * 95 | 0},80,255,`,
+        trail: Math.random() < 0.3,
+        gravity: 0.08 + Math.random() * 0.12,
+      });
+    }
+  }
+
+  // Spawn smaller ambient sparkles continuously after reveal
+  let sparkleActive = false;
+
+  function spawnSparkle(cx, cy) {
+    if (!sparkleActive) return;
+    for (let i = 0; i < 2; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist  = 80 + Math.random() * 120;
+      particles.push({
+        x: cx + Math.cos(angle) * dist * 0.3,
+        y: cy + Math.sin(angle) * dist * 0.3,
+        vx: (Math.random() - 0.5) * 1.5,
+        vy: -1 - Math.random() * 2,
+        life: 1,
+        decay: 0.025,
+        r:  1.5 + Math.random() * 2.5,
+        color: `rgba(255,${200 + Math.random() * 55 | 0},${Math.random() < 0.5 ? '50' : '200'},`,
+        trail: false,
+        gravity: 0,
+      });
+    }
+  }
+
+  function updateParticles() {
+    pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+    // Spawn ambient sparkles near card
+    if (sparkleActive) {
+      const pos = sampleCardCenter();
+      spawnSparkle(pos.x, pos.y);
+    }
+
+    particles = particles.filter(p => p.life > 0);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity;
+      p.vx *= 0.97;
+      p.life -= p.decay;
+
+      const a = Math.max(0, p.life);
+      pCtx.beginPath();
+      pCtx.arc(p.x, p.y, p.r * a + 0.5, 0, Math.PI * 2);
+      pCtx.fillStyle = p.color + a + ')';
+      pCtx.fill();
+
+      // Sparkle cross for larger particles
+      if (p.r > 4 && p.life > 0.5) {
+        pCtx.strokeStyle = p.color + (a * 0.4) + ')';
+        pCtx.lineWidth = 1;
+        pCtx.beginPath();
+        pCtx.moveTo(p.x - p.r * 2, p.y);
+        pCtx.lineTo(p.x + p.r * 2, p.y);
+        pCtx.moveTo(p.x, p.y - p.r * 2);
+        pCtx.lineTo(p.x, p.y + p.r * 2);
+        pCtx.stroke();
+      }
+    });
+
+    requestAnimationFrame(updateParticles);
+  }
+  updateParticles();
+
+  /* ============================================================
+     DOM REFERENCES
+  ============================================================ */
+  const scene       = document.getElementById('scene');
+  const flashOverlay = document.getElementById('flash-overlay');
+  const resultLabel  = document.getElementById('result-label');
+  const spinBtn      = document.getElementById('spin-btn');
+
+  /* ============================================================
+     UTILITY  – promise-based delay
+  ============================================================ */
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ============================================================
+     RESET STATE  – bring card back to initial hidden state
+  ============================================================ */
+  function resetCard() {
+    cardWrapper.style.transition = 'none';
+    cardWrapper.style.transform  = 'translateY(200px) scale(0.5) rotateY(0deg)';
+    cardWrapper.style.opacity    = '0';
+    cardWrapper.style.filter     = 'blur(0px)';
+    cardWrapper.classList.remove('glow');
+    resultLabel.classList.remove('visible');
+    resultLabel.textContent = '';
+    sparkleActive  = false;
+    trailActive    = false;
+    trailIntensity = 0;
+    particles      = [];
+    flashOverlay.classList.remove('flash');
+    scene.classList.remove('shake');
+  }
+
+  /* ============================================================
+     MAIN ANIMATION SEQUENCE
+  ============================================================ */
+  async function runGachaSequence() {
+    spinBtn.disabled = true;
+    resetCard();
+    await wait(80); // Let browser apply reset styles
+
+    /* ----------------------------------------------------------
+       PHASE 1 — Rise Up  (0.0s → 0.8s)
+       Card flies from below into center with elastic easing.
+    ---------------------------------------------------------- */
+    cardWrapper.style.transition =
+      'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), ' +
+      'opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+    cardWrapper.style.opacity   = '1';
+    cardWrapper.style.transform = 'translateY(-50px) scale(1.2) rotateY(0deg)';
+
+    await wait(820);
+
+    /* ----------------------------------------------------------
+       PHASE 2 — Spin + Trail  (0.8s → 2.2s) — 1400ms
+       3 full rotations around Y+Z axes with blur & trail.
+    ---------------------------------------------------------- */
+    // Activate trail canvas
+    trailActive    = true;
+    trailIntensity = 0;
+    // Ramp trail intensity up over 400ms then hold
+    const trailRampStart = performance.now();
+    const rampTrail = () => {
+      const elapsed = performance.now() - trailRampStart;
+      trailIntensity = Math.min(1, elapsed / 400);
+      if (trailIntensity < 1) requestAnimationFrame(rampTrail);
+    };
+    requestAnimationFrame(rampTrail);
+
+    // Apply spin transform
+    cardWrapper.style.transition =
+      'transform 1.4s cubic-bezier(0.4, 0, 0.6, 1), ' +
+      'filter 1.0s ease-in';
+    // 3 full Y-rotations = 1080deg, slight Z wobble and scale compression
+    cardWrapper.style.transform = 'translateY(-50px) scale(0.85) rotateY(1080deg) rotateZ(15deg)';
+    cardWrapper.style.filter    = 'blur(4px) brightness(1.4)';
+
+    await wait(1400);
+
+    /* ----------------------------------------------------------
+       PHASE 3 — IMPACT!  (2.2s → 2.5s) — 300ms
+       Blast forward, screen-shake, flash, particle explosion.
+    ---------------------------------------------------------- */
+    // Stop trail
+    trailActive    = false;
+    trailIntensity = 0;
+
+    // Blaze forward at max scale
+    cardWrapper.style.transition =
+      'transform 0.22s cubic-bezier(0.0, 0, 0.2, 1), ' +
+      'filter 0.12s ease-out';
+    cardWrapper.style.transform = 'translateY(-50px) scale(1.65) rotateY(1080deg) rotateZ(0deg)';
+    cardWrapper.style.filter    = 'blur(0px) brightness(2.5)';
+
+    // Trigger flash and shake simultaneously
+    void flashOverlay.offsetWidth;
+    flashOverlay.classList.add('flash');
+
+    await wait(80);
+    void scene.offsetWidth;
+    scene.classList.add('shake');
+
+    // Particle explosion from card center
+    const pos = sampleCardCenter();
+    spawnExplosion(pos.x, pos.y);
+
+    // Remove shake class after animation ends
+    setTimeout(() => scene.classList.remove('shake'), 380);
+
+    await wait(280);
+
+    /* ----------------------------------------------------------
+       PHASE 4 — Land + Flip Reveal  (2.5s → 3.0s) — 500ms
+       Scale back to normal, flip 180° more to show front face.
+    ---------------------------------------------------------- */
+    cardWrapper.style.transition =
+      'transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1), ' +
+      'filter 0.3s ease';
+    // Land at center, flip to front: rotateY ends at 1260 = 1080 + 180
+    cardWrapper.style.transform = 'translateY(0px) scale(1.0) rotateY(1260deg) rotateZ(0deg)';
+    cardWrapper.style.filter    = 'blur(0px) brightness(1.0)';
+
+    await wait(400);
+
+    // Add gold glow ring
+    cardWrapper.classList.add('glow');
+
+    // Start ambient sparkles
+    sparkleActive = true;
+
+    // Show result label
+    resultLabel.textContent = '✦ SSR Obtained — Thiên Long Vô Lượng ✦';
+    resultLabel.classList.add('visible');
+
+    await wait(200);
+    spinBtn.disabled = false;
+  }
+
+  /* ============================================================
+     BUTTON EVENT
+  ============================================================ */
+  spinBtn.addEventListener('click', runGachaSequence);
+
+  /* ============================================================
+     AUTO-LAUNCH on load after brief delay
+  ============================================================ */
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(runGachaSequence, 600);
+  });
+  </script>
+</body>
+</html>
