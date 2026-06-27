@@ -12,7 +12,10 @@
   --sidebar-text: #f1f5f9;
   --sidebar-text-muted: #94a3b8;
   --card-bg-front: #ffffff;
-  --card-bg-back: linear-gradient(135deg, #0284c7, #075985);
+  --card-bg-back: linear-gradient(145deg, #0f8fcf 0%, #075985 54%, #063c68 100%);
+  --card-back-border: rgba(125, 211, 252, 0.66);
+  --card-back-highlight: rgba(224, 242, 254, 0.2);
+  --card-back-shadow: 0 18px 34px -16px rgba(2, 132, 199, 0.72);
   --text-dark: #1e293b;
   --text-muted: #64748b;
   --accent: #0284c7;
@@ -226,7 +229,7 @@ kbd {
 }
 
 .show-sidebar-btn {
-  position: absolute;
+  position: fixed;
   top: 24px;
   left: 24px;
   z-index: 5;
@@ -243,6 +246,7 @@ kbd {
   gap: 8px;
   box-shadow: var(--shadow-md);
   transition: opacity var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+  white-space: nowrap;
 }
 
 .show-sidebar-btn:hover {
@@ -264,12 +268,17 @@ kbd {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 32px;
   background-color: #ffffff;
   flex-shrink: 0;
 }
 
 .sidebar-collapsed-padding {
-  padding-left: 100px;
+  padding-left: 0;
+}
+
+.sidebar-collapsed-padding .dashboard {
+  padding-left: 220px;
 }
 
 .dashboard-logo h1 {
@@ -277,6 +286,7 @@ kbd {
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text-dark);
+  white-space: nowrap;
 }
 
 .dashboard-logo h1 span {
@@ -287,6 +297,8 @@ kbd {
   display: flex;
   align-items: center;
   gap: 24px;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 /* Toggle Switch Button */
@@ -294,25 +306,28 @@ kbd {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .toggle-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .switch-button {
   background: #f1f5f9;
   border-radius: 30px;
   overflow: hidden;
-  width: 180px;
+  width: 224px;
+  flex: 0 0 224px;
   text-align: center;
-  font-size: 0.825rem;
-  letter-spacing: 0.5px;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
   color: var(--accent);
   position: relative;
-  padding-right: 90px;
+  padding-right: 0;
   border: 1px solid var(--border-color);
 }
 
@@ -330,7 +345,7 @@ kbd {
 }
 
 .switch-button-checkbox:checked + .switch-button-label:before {
-  transform: translate(88px, -50%);
+  transform: translate(110px, -50%);
   background: var(--accent);
 }
 
@@ -358,7 +373,7 @@ kbd {
   top: 50%;
   left: 2px;
   transform: translateY(-50%);
-  width: 86px;
+  width: 108px;
   height: 30px;
   border-radius: 30px;
   background: var(--accent);
@@ -367,20 +382,24 @@ kbd {
 }
 
 .switch-button-label-span {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 2px;
   z-index: 1;
   color: #fff;
   font-weight: 600;
-  display: inline-block;
-  width: 88px;
+  display: block;
+  width: 108px;
+  line-height: 36px;
+  text-align: center;
   transition: color 0.25s;
 }
 
 .switch-button-label:after {
   content: "Mặt Sau";
   position: absolute;
-  right: 0;
-  width: 90px;
+  right: 2px;
+  width: 108px;
   text-align: center;
   top: 0;
   z-index: 1;
@@ -398,6 +417,8 @@ kbd {
   font-size: 0.875rem;
   font-weight: 500;
   border: 1px solid rgba(2, 132, 199, 0.15);
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .stats-badge strong {
@@ -431,18 +452,58 @@ kbd {
   align-items: center;
   gap: 16px;
   user-select: none;
+  margin-top: 30px;
 }
 
 .deck-pile {
   position: relative;
   width: 160px;
   height: 230px;
-  cursor: grab;
+  cursor: pointer;
   transition: transform var(--transition-fast);
+  isolation: isolate;
+}
+
+.deck-pile.extracting {
+  z-index: 9500;
+}
+
+.deck-pile::before {
+  content: '';
+  position: absolute;
+  top: 52px;
+  left: -18px;
+  width: 126%;
+  height: 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0), rgba(125, 211, 252, 0.85), rgba(167, 139, 250, 0));
+  filter: blur(4px);
+  opacity: 0;
+  transform: translate3d(8px, 2px, 0) rotate(-4deg) scaleX(0.3);
+  transform-origin: 20% 50%;
+  transition: opacity 0.22s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.deck-pile::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: -22px;
+  bottom: -22px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.22);
+  filter: blur(10px);
+  transform: translate3d(0, 0, 0) scaleX(0.9);
+  transition: transform var(--transition-normal), opacity var(--transition-fast);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .deck-pile:active {
-  cursor: grabbing;
+  cursor: pointer;
 }
 
 .deck-card {
@@ -452,37 +513,68 @@ kbd {
   width: 100%;
   height: 100%;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+  background: var(--card-bg-back);
+  border: 1px solid var(--card-back-border);
+  box-shadow: var(--card-back-shadow);
+  color: white;
+  overflow: hidden;
+  transform-origin: 50% 62%;
+  transition:
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--transition-normal),
+    filter var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.deck-card::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--card-back-highlight);
+  box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.deck-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.24), transparent 18%),
+    linear-gradient(115deg, transparent 22%, rgba(255, 255, 255, 0.16) 48%, transparent 72%);
+  opacity: 0.58;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Deck Pile 3D Layering */
 .deck-card-3 {
-  background-color: #cbd5e1;
-  transform: translate3d(8px, 8px, 0);
+  transform: translate3d(16px, 15px, 0) rotate(4deg);
   z-index: 1;
-  border: 1px solid #94a3b8;
+  opacity: 0.76;
+  filter: brightness(0.84) saturate(0.94);
 }
 
 .deck-card-2 {
-  background-color: #e2e8f0;
-  transform: translate3d(4px, 4px, 0);
+  transform: translate3d(8px, 7px, 0) rotate(1.7deg);
   z-index: 2;
-  border: 1px solid #cbd5e1;
+  opacity: 0.9;
+  filter: brightness(0.92);
 }
 
 .deck-card-1 {
-  background: var(--card-bg-back);
-  transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0) rotate(-1.3deg);
   z-index: 3;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
 }
 
 .deck-card-inner {
+  position: relative;
+  z-index: 2;
   padding: 16px;
   height: 100%;
   width: 100%;
@@ -508,25 +600,50 @@ kbd {
 
 /* Pile Hover Effects */
 .deck-pile:hover .deck-card-1 {
-  transform: translate3d(-2px, -4px, 0);
-  box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.3);
+  transform: translate3d(-5px, -8px, 0) rotate(-3.5deg);
+  box-shadow: 0 24px 36px -16px rgba(2, 132, 199, 0.52);
 }
 
 .deck-pile:hover .deck-card-2 {
-  transform: translate3d(2px, 0px, 0);
+  transform: translate3d(8px, 6px, 0) rotate(1.2deg);
 }
 
 .deck-pile:hover .deck-card-3 {
-  transform: translate3d(6px, 4px, 0);
+  transform: translate3d(18px, 16px, 0) rotate(4.8deg);
 }
 
-.deck-pile.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
+.deck-pile:hover::after {
+  transform: translate3d(4px, 2px, 0) scaleX(1);
+}
+
+.deck-pile.extracting .deck-card-1 {
+  transform: translate3d(-17px, -25px, 0) rotate(-6.5deg);
+  box-shadow: 0 24px 38px -15px rgba(2, 132, 199, 0.6);
+}
+
+.deck-pile.extracting .deck-card-2 {
+  transform: translate3d(-36px, -34px, 0) rotate(-9deg);
+  opacity: 0.34;
+  filter: brightness(1.08) saturate(1.08);
+}
+
+.deck-pile.extracting .deck-card-3 {
+  transform: translate3d(22px, 20px, 0) rotate(5.6deg);
+  opacity: 0.82;
+}
+
+.deck-pile.extracting::before {
+  opacity: 1;
+  transform: translate3d(-8px, -2px, 0) rotate(-8deg) scaleX(1);
+}
+
+.deck-pile.extracting::after {
+  transform: translate3d(10px, 8px, 0) scaleX(1.08);
+  opacity: 0.78;
 }
 
 .deck-pile.empty {
-  cursor: not-allowed;
+  cursor: default;
   pointer-events: none;
 }
 
@@ -534,6 +651,14 @@ kbd {
   background: #f1f5f9;
   border: 2px dashed #cbd5e1;
   color: #94a3b8;
+}
+
+.deck-pile.empty::after {
+  opacity: 0;
+}
+
+.deck-pile.empty::before {
+  opacity: 0;
 }
 
 .deck-pile.empty .deck-card-face {
@@ -553,14 +678,7 @@ kbd {
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 500;
-}
-
-/* Connector Arrow */
-.connector-arrow {
-  color: #cbd5e1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  text-align: center;
 }
 
 /* Active Card Slot Container */
@@ -582,11 +700,6 @@ kbd {
   justify-content: center;
   position: relative;
   transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.card-slot.drag-over {
-  background-color: var(--accent-light);
-  border-color: var(--accent);
 }
 
 .slot-placeholder {
@@ -849,15 +962,35 @@ kbd {
 }
 
 /* Desktop and Responsive Optimization */
+@media (max-width: 1200px) {
+  .dashboard {
+    height: auto;
+    min-height: 80px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-collapsed-padding .dashboard {
+    padding-left: 170px;
+  }
+
+  .dashboard-controls {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+}
+
 @media (max-width: 992px) {
   .play-zone {
     flex-direction: column;
     gap: 30px;
   }
-  
-  .connector-arrow {
-    transform: rotate(90deg);
+
+  .deck-pile-container {
+    margin-top: 10px;
   }
+  
 }
 
 @media (max-width: 768px) {
@@ -887,6 +1020,11 @@ kbd {
   .main-content {
     height: calc(100vh - 80px);
   }
+
+  .sidebar-collapsed-padding .dashboard {
+    padding-left: 20px;
+    padding-top: 76px;
+  }
 }
 
 /* ===========================================================
@@ -895,17 +1033,13 @@ kbd {
    Replaces the old inline-card animation system.
 =========================================================== */
 
-/* ── Card Slot: remove permanent dashed frame ────────────── */
-/* The drop-zone visual is now shown only on hover/drag-over  */
+/* The old drop zone is hidden now that draw/flip share one control. */
 .card-slot {
+  display: none;
   border-color: transparent;
   background-color: transparent;
 }
-.card-slot.drag-over {
-  border-color: var(--accent);
-  background-color: var(--accent-light);
-}
-/* Old drop-zone placeholder no longer needed */
+
 .slot-placeholder { display: none !important; }
 
 /* ── Canvas layers ────────────────────────────────────────── */
@@ -952,7 +1086,7 @@ kbd {
 #gacha-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(5, 5, 15, 0.88);
+  background: rgba(5, 5, 15, 0.84);
   z-index: 500;
   opacity: 0;
   pointer-events: none;
@@ -975,6 +1109,7 @@ kbd {
   /* JS overrides this with translate3d during animation;
      after animation is cancelled the CSS default restores centering */
   transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
   transform-style: preserve-3d;
   perspective: 1100px;
   z-index: 9999;
@@ -984,6 +1119,11 @@ kbd {
   user-select: none;
 }
 #gacha-fly-card.active { display: block; }
+
+#gacha-fly-card.extracting-from-deck {
+  z-index: 9000;
+  pointer-events: none;
+}
 
 /* Pulsing glow after card lands */
 #gacha-fly-card.glow-fly {
@@ -1018,6 +1158,39 @@ kbd {
   transform: rotateY(360deg);
 }
 
+#gacha-fly-inner.flight-mystery #gacha-fly-front {
+  background: var(--card-bg-back);
+  border-color: var(--card-back-border);
+  box-shadow:
+    var(--card-back-shadow),
+    inset 0 0 48px rgba(224, 242, 254, 0.08),
+    0 0 40px rgba(56, 189, 248, 0.24);
+}
+
+#gacha-fly-inner.flight-mystery #gacha-fly-front .fly-face-label,
+#gacha-fly-inner.flight-mystery #gacha-fly-front .fly-face-text,
+#gacha-fly-inner.flight-mystery #gacha-fly-front .fly-face-hint {
+  opacity: 0;
+}
+
+#gacha-fly-inner.flight-mystery #gacha-fly-front .fly-corner {
+  border-color: rgba(125, 211, 252, 0.42);
+}
+
+#gacha-fly-inner.flight-mystery #gacha-fly-front::after {
+  content: 'UNKNOWN';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: rgba(224, 242, 254, 0.82);
+  text-transform: uppercase;
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.62));
+}
+
 /* ── BACK FACE (outer shell) ─────────────────────────────── */
 #gacha-fly-back {
   position: absolute;
@@ -1033,11 +1206,12 @@ kbd {
   position: absolute;
   inset: 0;
   border-radius: 20px;
-  background: radial-gradient(circle at 35% 28%, #1e0845 0%, #09031e 55%, #020009 100%);
-  border: 2px solid rgba(167, 93, 255, 0.75);
+  background: var(--card-bg-back);
+  border: 2px solid var(--card-back-border);
   box-shadow:
-    inset 0 0 55px rgba(124, 58, 237, 0.28),
-    0 0 40px rgba(124, 58, 237, 0.22);
+    var(--card-back-shadow),
+    inset 0 0 55px rgba(224, 242, 254, 0.08),
+    0 0 40px rgba(56, 189, 248, 0.24);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1049,28 +1223,30 @@ kbd {
   position: absolute;
   inset: 0;
   border-radius: 18px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(167, 93, 255, 0.18) 0%, transparent 60%);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(224, 242, 254, 0.18) 0%, transparent 60%),
+    linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.16) 48%, transparent 74%);
   pointer-events: none;
 }
 
 .fly-seal-ring {
   width: 88px;
   height: 88px;
-  border: 2px solid rgba(167, 93, 255, 0.45);
+  border: 2px solid rgba(125, 211, 252, 0.45);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   animation: fly-seal-spin 8s linear infinite;
-  filter: drop-shadow(0 0 14px rgba(167, 93, 255, 0.8));
+  filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.8));
 }
 @keyframes fly-seal-spin { to { transform: rotate(360deg); } }
-.fly-seal-icon { font-size: 2.8rem; color: rgba(196, 148, 255, 0.9); line-height: 1; }
+.fly-seal-icon { font-size: 2.8rem; color: rgba(224, 242, 254, 0.9); line-height: 1; }
 
 .fly-unknown-label {
   font-size: 0.68rem;
   letter-spacing: 0.24em;
-  color: rgba(196, 148, 255, 0.8);
+  color: rgba(224, 242, 254, 0.8);
   text-transform: uppercase;
   margin: 0;
 }
@@ -1195,8 +1371,8 @@ kbd {
 .fly-corner.tr { top: 10px;    right: 10px; border-width: 2px 2px 0 0; }
 .fly-corner.bl { bottom: 10px; left: 10px;  border-width: 0 0 2px 2px; }
 .fly-corner.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
-/* Purple: mystery face */
-#fly-mystery-layer .fly-corner { border-color: rgba(167, 93, 255, 0.42); }
+/* Deck-back mystery face */
+#fly-mystery-layer .fly-corner { border-color: rgba(125, 211, 252, 0.42); }
 /* Blue: content faces */
 #gacha-fly-front    .fly-corner,
 #fly-second-content .fly-corner { border-color: rgba(56, 189, 248, 0.38); }

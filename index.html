@@ -33,8 +33,7 @@ Tạm biệt/Goodbye" spellcheck="false"></textarea>
         <div class="instructions-panel">
           <h3>Phím tắt nhanh</h3>
           <ul>
-            <li><kbd>Enter</kbd> Rút thẻ</li>
-            <li><kbd>Space</kbd> Lật thẻ</li>
+            <li><kbd>Enter</kbd> / <kbd>Space</kbd> Rút / lật thẻ</li>
             <li><kbd>←</kbd> Giữ lại</li>
             <li><kbd>→</kbd> Loại bỏ khỏi bộ</li>
             <li><kbd>H</kbd> Ẩn/Hiện khung nhập</li>
@@ -85,24 +84,19 @@ Tạm biệt/Goodbye" spellcheck="false"></textarea>
         <div class="play-zone">
           <!-- Left Pile (Deck visual) -->
           <div class="deck-pile-container">
-            <div class="deck-pile" id="deck-pile" draggable="true" title="Kéo thẻ hoặc click để rút">
+            <div class="deck-pile" id="deck-pile" title="Sấp thẻ">
               <div class="deck-card deck-card-3"></div>
               <div class="deck-card deck-card-2"></div>
               <div class="deck-card deck-card-1">
                 <div class="deck-card-inner">
                   <div class="deck-card-face">
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886H3.882l5.056 3.674L7.022 18.45 12 14.778l4.978 3.671-1.916-5.89 5.056-3.674h-6.206L12 3z"/></svg>
-                    <span>Rút thẻ</span>
+                    <span id="deck-card-label">Rút thẻ</span>
                   </div>
                 </div>
               </div>
             </div>
-            <p class="pile-help">Kéo thẻ hoặc click vào xấp bài</p>
-          </div>
-
-          <!-- Connector Arrow -->
-          <div class="connector-arrow">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            <p class="pile-help">Click vào sấp bài để rút thẻ</p>
           </div>
 
           <!-- Drop Slot & Active Card Slot -->
@@ -111,7 +105,7 @@ Tạm biệt/Goodbye" spellcheck="false"></textarea>
               <!-- Placeholder helper before drawing -->
               <div class="slot-placeholder" id="slot-placeholder">
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
-                <p>Thả thẻ vào đây để xem</p>
+                <p>Thẻ sẽ xuất hiện ở đây</p>
               </div>
 
               <!-- Flip Card Component (Dynamically rendered/animated) -->
@@ -161,7 +155,7 @@ Tạm biệt/Goodbye" spellcheck="false"></textarea>
   <div id="gacha-fly-card">
     <div id="gacha-fly-inner">
 
-      <!-- BACK FACE: purple mystery design shown during flight.
+      <!-- BACK FACE: deck-back mystery design shown during flight.
            After the user clicks to flip, #fly-mystery-layer hides
            and #fly-second-content appears in its place. -->
       <div id="gacha-fly-back">
