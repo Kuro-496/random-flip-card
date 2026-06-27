@@ -1389,3 +1389,424 @@ kbd {
 }
 
 /* end of stylesheet */
+
+/* Mobile polish */
+@media (max-width: 768px) {
+  html,
+  body {
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body {
+    display: block;
+  }
+
+  .app-container {
+    display: block;
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    z-index: 10000;
+    border-right: none;
+    border-bottom: none;
+    transform: translateY(0);
+    transition: transform var(--transition-normal);
+  }
+
+  .sidebar.collapsed {
+    width: 100%;
+    height: 100dvh;
+    transform: translateY(-100%);
+  }
+
+  .sidebar-header {
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+  }
+
+  .sidebar-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .sidebar-content {
+    min-height: 0;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .input-desc,
+  .format-badge,
+  .validation-info {
+    font-size: 0.8rem;
+  }
+
+  textarea {
+    min-height: 220px;
+    flex: 1 1 240px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .instructions-panel {
+    margin-top: 0;
+    padding: 12px;
+  }
+
+  .instructions-panel ul {
+    gap: 7px;
+  }
+
+  .instructions-panel li {
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+    line-height: 1.35;
+  }
+
+  .show-sidebar-btn {
+    top: calc(12px + env(safe-area-inset-top));
+    left: 12px;
+    height: 40px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    z-index: 70;
+  }
+
+  .main-content {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 0;
+    height: auto;
+    padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+    gap: 10px 12px;
+  }
+
+  .sidebar-collapsed-padding .dashboard {
+    padding-left: 16px;
+    padding-top: calc(64px + env(safe-area-inset-top));
+  }
+
+  .dashboard-logo {
+    min-width: 0;
+  }
+
+  .dashboard-logo h1 {
+    font-size: 1.18rem;
+    letter-spacing: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-controls {
+    display: contents;
+  }
+
+  .stats-badge {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    border-radius: 999px;
+  }
+
+  .toggle-group {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 184px;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .toggle-label {
+    min-width: 0;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  .switch-button {
+    justify-self: end;
+    width: 184px;
+    flex: 0 0 184px;
+    font-size: 0.75rem;
+  }
+
+  .switch-button-label {
+    height: 34px;
+    line-height: 34px;
+  }
+
+  .switch-button-label:before {
+    width: 88px;
+    height: 28px;
+  }
+
+  .switch-button-label-span {
+    width: 88px;
+    line-height: 34px;
+  }
+
+  .switch-button-label:after {
+    width: 88px;
+    line-height: 34px;
+  }
+
+  .switch-button-checkbox:checked + .switch-button-label:before {
+    transform: translate(92px, -50%);
+  }
+
+  .arena {
+    height: calc(100dvh - 125px);
+    min-height: 0;
+    padding: 14px 16px max(82px, calc(68px + env(safe-area-inset-bottom)));
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .sidebar-collapsed-padding .arena {
+    height: calc(100dvh - 177px);
+  }
+
+  .play-zone {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .deck-pile-container {
+    gap: 12px;
+    margin-top: 0;
+  }
+
+  .deck-pile {
+    width: clamp(128px, 38vw, 154px);
+    height: auto;
+    aspect-ratio: 160 / 230;
+  }
+
+  .deck-card::before {
+    inset: 10px;
+  }
+
+  .deck-card-face {
+    gap: 10px;
+  }
+
+  .deck-card-face svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .deck-card-face span {
+    font-size: 0.78rem;
+  }
+
+  .pile-help {
+    max-width: 220px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .toast-container {
+    position: fixed;
+    top: calc(12px + env(safe-area-inset-top));
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    z-index: 11000;
+  }
+
+  .toast {
+    padding: 12px 14px;
+    font-size: 0.82rem;
+  }
+
+  #gacha-overlay {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
+  #gacha-fly-card {
+    width: min(72vw, 260px);
+    height: auto;
+    aspect-ratio: 260 / 370;
+  }
+
+  #fly-mystery-layer,
+  #gacha-fly-back,
+  #gacha-fly-front,
+  #fly-second-content {
+    border-radius: 18px;
+  }
+
+  #gacha-fly-front,
+  #fly-second-content {
+    padding: 22px 18px;
+  }
+
+  .fly-seal-ring {
+    width: 74px;
+    height: 74px;
+  }
+
+  .fly-seal-icon {
+    font-size: 2.25rem;
+  }
+
+  .fly-face-label,
+  .fly-face-hint {
+    font-size: 0.55rem;
+  }
+
+  .fly-face-text {
+    max-height: 42dvh;
+    font-size: clamp(1.18rem, 6vw, 1.65rem);
+    line-height: 1.3;
+  }
+
+  .action-buttons.gacha-mode {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    gap: 10px;
+  }
+
+  .action-btn {
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+
+  .action-btn svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sidebar-collapsed-padding .dashboard {
+    padding-left: 12px;
+  }
+
+  .toggle-group {
+    grid-template-columns: minmax(0, 1fr) 176px;
+  }
+
+  .switch-button {
+    width: 176px;
+    flex-basis: 176px;
+    font-size: 0.72rem;
+  }
+
+  .switch-button-label:before,
+  .switch-button-label-span,
+  .switch-button-label:after {
+    width: 84px;
+  }
+
+  .switch-button-checkbox:checked + .switch-button-label:before {
+    transform: translate(88px, -50%);
+  }
+
+  .arena {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .deck-pile {
+    width: clamp(118px, 37vw, 138px);
+  }
+
+  #gacha-fly-card {
+    width: min(76vw, 238px);
+  }
+
+  .action-buttons.gacha-mode {
+    width: calc(100vw - 24px);
+  }
+
+  .action-btn {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-height: 680px) and (max-width: 768px) {
+  .sidebar-collapsed-padding .dashboard {
+    padding-top: calc(58px + env(safe-area-inset-top));
+  }
+
+  .dashboard {
+    gap: 8px 10px;
+  }
+
+  .arena {
+    height: calc(100dvh - 116px);
+    padding-bottom: max(72px, calc(58px + env(safe-area-inset-bottom)));
+  }
+
+  .sidebar-collapsed-padding .arena {
+    height: calc(100dvh - 164px);
+  }
+
+  .deck-pile {
+    width: clamp(110px, 34vw, 136px);
+  }
+
+  .pile-help {
+    display: none;
+  }
+
+  #gacha-fly-card {
+    width: min(66vw, 226px);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .deck-pile:hover .deck-card-1 {
+    transform: translate3d(0, 0, 0) rotate(-1.3deg);
+    box-shadow: var(--card-back-shadow);
+  }
+
+  .deck-pile:hover .deck-card-2 {
+    transform: translate3d(8px, 7px, 0) rotate(1.7deg);
+  }
+
+  .deck-pile:hover .deck-card-3 {
+    transform: translate3d(16px, 15px, 0) rotate(4deg);
+  }
+
+  .deck-pile:hover::after {
+    transform: translate3d(0, 0, 0) scaleX(0.9);
+  }
+
+  .action-btn:hover {
+    transform: none;
+  }
+}

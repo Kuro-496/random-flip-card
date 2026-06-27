@@ -466,8 +466,9 @@ async function drawCard() {
   ─────────────────────────────────────────────────────────── */
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const flyW = 260;
-  const flyH = 370;
+  const flyRect = gachaFlyCard.getBoundingClientRect();
+  const flyW = flyRect.width || 260;
+  const flyH = flyRect.height || 370;
   const halfW = flyW / 2;
   const halfH = flyH / 2;
 
