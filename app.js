@@ -72,6 +72,7 @@ window.addEventListener('resize', resizeCanvases);
 // ============================================================
 let trailActive = false;
 let trailIntensity = 0;
+let trailRafId = null;
 const trailHistory = [];
 const TRAIL_MAX = 28;
 
@@ -81,53 +82,73 @@ function sampleCardCenter() {
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height };
 }
 
+function requestTrailLoop() {
+  if (trailRafId === null) trailRafId = requestAnimationFrame(drawTrailLoop);
+}
+
+function setTrailActive(active) {
+  trailActive = active;
+  if (active) {
+    trailIntensity = 1;
+    requestTrailLoop();
+  }
+}
+
 function drawTrailLoop() {
+  trailRafId = null;
   trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
 
-  if (trailActive && trailIntensity > 0) {
-    const pos = sampleCardCenter();
-    trailHistory.push({ ...pos });
-    if (trailHistory.length > TRAIL_MAX) trailHistory.shift();
+  if (trailActive) {
+    if (trailIntensity > 0) {
+      const pos = sampleCardCenter();
+      trailHistory.push({ ...pos });
+      if (trailHistory.length > TRAIL_MAX) trailHistory.shift();
 
-    trailHistory.forEach((p, i) => {
-      const progress = i / TRAIL_MAX;
-      const alpha = progress * trailIntensity * 0.42;
-      const size = p.w * 0.48 * progress;
+      trailHistory.forEach((p, i) => {
+        const progress = i / TRAIL_MAX;
+        const alpha = progress * trailIntensity * 0.42;
+        const size = p.w * 0.48 * progress;
 
-      const grd = trailCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size + 24);
-      grd.addColorStop(0, `rgba(56, 189, 248, ${alpha})`);
-      grd.addColorStop(0.5, `rgba( 2, 132, 199, ${alpha * 0.55})`);
-      grd.addColorStop(1, 'rgba(7, 89, 133, 0)');
+        const grd = trailCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size + 24);
+        grd.addColorStop(0, `rgba(56, 189, 248, ${alpha})`);
+        grd.addColorStop(0.5, `rgba( 2, 132, 199, ${alpha * 0.55})`);
+        grd.addColorStop(1, 'rgba(7, 89, 133, 0)');
 
-      trailCtx.beginPath();
-      trailCtx.arc(p.x, p.y, size + 24, 0, Math.PI * 2);
-      trailCtx.fillStyle = grd;
-      trailCtx.fill();
-    });
+        trailCtx.beginPath();
+        trailCtx.arc(p.x, p.y, size + 24, 0, Math.PI * 2);
+        trailCtx.fillStyle = grd;
+        trailCtx.fill();
+      });
+    }
+    requestTrailLoop();
   } else {
     trailHistory.length = 0;
   }
-
-  requestAnimationFrame(drawTrailLoop);
 }
-drawTrailLoop();
 
 // ============================================================
 // PARTICLE SYSTEM
-// spawnExplosion: big burst on impact.
-// spawnEdgeSparkles: gold/blue sparks that fly outward from
-//   the bottom half of the fly card's left and right edges.
+// Renders dynamic spark particles using Canvas 2D.
 // ============================================================
 let particles = [];
 let sparkleActive = false;
+let particleRafId = null;
 const CARD_SPARK_COLORS = [
   'rgba(15, 143, 207,',
   'rgba(7, 89, 133,',
-  'rgba(125, 211, 252,',
+  'rgba(56, 189, 248,'
 ];
-
 function cardSparkColor() {
   return CARD_SPARK_COLORS[Math.floor(Math.random() * CARD_SPARK_COLORS.length)];
+}
+
+function requestParticleLoop() {
+  if (particleRafId === null) particleRafId = requestAnimationFrame(particleLoop);
+}
+
+function setSparklesActive(active) {
+  sparkleActive = active;
+  if (active) requestParticleLoop();
 }
 
 function spawnExplosion(cx, cy) {
@@ -145,6 +166,7 @@ function spawnExplosion(cx, cy) {
       gravity: 0.08 + Math.random() * 0.12,
     });
   }
+  requestParticleLoop();
 }
 
 function spawnTakeoffBurst() {
@@ -169,6 +191,7 @@ function spawnTakeoffBurst() {
       gravity: 0.045 + Math.random() * 0.045,
     });
   }
+  requestParticleLoop();
 }
 
 /**
@@ -207,6 +230,7 @@ function spawnEdgeSparkles() {
 }
 
 function particleLoop() {
+  particleRafId = null;
   pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
   spawnEdgeSparkles();
 
@@ -235,9 +259,10 @@ function particleLoop() {
     }
   });
 
-  requestAnimationFrame(particleLoop);
+  if (particles.length > 0 || sparkleActive) {
+    requestParticleLoop();
+  }
 }
-particleLoop();
 
 // ============================================================
 // UTILITY
@@ -348,11 +373,12 @@ async function dismissGacha() {
   if (!gachaMode) return;
 
   gachaFlyCard.classList.remove('glow-fly');
+  gachaFlyCard.classList.remove('glow-fly-intro');
   gachaFlyCard.classList.remove('extracting-from-deck');
   gachaFlyInner.classList.remove('flight-mystery');
   deckPile.classList.remove('extracting');
-  sparkleActive = false;
-  trailActive = false;
+  setSparklesActive(false);
+  setTrailActive(false);
   trailHistory.length = 0;
 
   // Cancel any running web animations so we start fresh
@@ -436,7 +462,11 @@ async function drawCard() {
   /* ── 4. Reset fly card visual state ────────────────────────── */
   gachaFlyInner.classList.remove('revealed', 'user-flipped');
   gachaFlyInner.classList.add('flight-mystery');
-  gachaFlyCard.classList.remove('glow-fly');
+  gachaFlyCard.classList.remove('glow-fly', 'glow-fly-intro');
+  setSparklesActive(false);
+  setTrailActive(false);
+  particles = [];
+  pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
   flyMysteryLayer.style.display = '';    // mystery visible
   flySecondContent.hidden = true;  // second face hidden
   flyFirstFlipDone = false;
@@ -452,8 +482,9 @@ async function drawCard() {
   actionButtons.classList.remove('gacha-mode');
 
   /* ── 6. Start edge sparkles ─────────────────────────────────── */
-  sparkleActive = false;
+  setSparklesActive(false);
   particles = [];
+  pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
 
   /* ────────────────────────────────────────────────────────────
      PHASE 1: S-Curve Flight  (0 -> 1180 ms)
@@ -577,8 +608,8 @@ async function drawCard() {
   const extractionShare = extractionDuration / takeoffDuration;
   gachaFlyCard.classList.remove('extracting-from-deck');
   gachaOverlay.classList.add('active');
-  sparkleActive = true;
-  trailActive = true;
+  setSparklesActive(true);
+  setTrailActive(true);
   trailIntensity = 0;
   spawnTakeoffBurst();
   const rampT = performance.now();
@@ -626,7 +657,7 @@ async function drawCard() {
     });
   });
 
-  trailActive = false;
+  setTrailActive(false);
   deckPile.classList.remove('extracting');
 
   /* ────────────────────────────────────────────────────────────
@@ -721,6 +752,7 @@ async function drawCard() {
 
   /* ── Glow & reveal action buttons ──────────────────────── */
   gachaFlyCard.classList.add('glow-fly');
+  
   actionButtons.classList.remove('hidden');
   actionButtons.classList.add('gacha-mode');
 

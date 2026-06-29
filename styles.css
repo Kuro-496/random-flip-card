@@ -1125,16 +1125,38 @@ kbd {
   pointer-events: none;
 }
 
-/* Pulsing glow after card lands */
+/* Single unified class for glow: fades in, then loops perfectly */
 #gacha-fly-card.glow-fly {
-  animation: glow-fly-pulse 1.6s ease-in-out infinite alternate;
+  animation: 
+    glow-fly-fade-in 0.8s ease-out forwards,
+    glow-fly-pulse-loop 3.2s ease-in-out 0.8s infinite;
 }
-@keyframes glow-fly-pulse {
-  from {
+
+@keyframes glow-fly-fade-in {
+  from { 
+    filter: drop-shadow(0 0 0px rgba(2, 132, 199, 0))
+            drop-shadow(0 0 0px rgba(56, 189, 248, 0));
+  }
+  to { 
+    /* Expand all the way to MAX size for a seamless handoff at the peak */
+    filter: drop-shadow(0 0 38px rgba(2,  132, 199, 1.00))
+            drop-shadow(0 0 90px rgba(56, 189, 248, 0.58));
+  }
+}
+
+@keyframes glow-fly-pulse-loop {
+  0% {
+    /* Starts exactly at MAX size where fade-in left off */
+    filter: drop-shadow(0 0 38px rgba(2,  132, 199, 1.00))
+            drop-shadow(0 0 90px rgba(56, 189, 248, 0.58));
+  }
+  50% {
+    /* Shrinks down to MIN size */
     filter: drop-shadow(0 0 18px rgba(2,  132, 199, 0.70))
             drop-shadow(0 0 40px rgba(56, 189, 248, 0.28));
   }
-  to {
+  100% {
+    /* Back to MAX size */
     filter: drop-shadow(0 0 38px rgba(2,  132, 199, 1.00))
             drop-shadow(0 0 90px rgba(56, 189, 248, 0.58));
   }
@@ -1425,6 +1447,14 @@ kbd {
     width: 100%;
     height: 100dvh;
     transform: translateY(-100%);
+  }
+
+  .toggle-sidebar-btn .icon-desktop {
+    display: none;
+  }
+  
+  .toggle-sidebar-btn .icon-mobile {
+    display: block !important;
   }
 
   .sidebar-header {
