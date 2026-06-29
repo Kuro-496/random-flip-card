@@ -542,9 +542,9 @@ kbd {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.24), transparent 18%),
-    linear-gradient(115deg, transparent 22%, rgba(255, 255, 255, 0.16) 48%, transparent 72%);
-  opacity: 0.58;
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.22), transparent 25%),
+    linear-gradient(115deg, transparent 15%, rgba(255, 255, 255, 0.08) 46%, rgba(255, 255, 255, 0.08) 54%, transparent 85%);
+  opacity: 0.45;
   pointer-events: none;
   z-index: 0;
 }
