@@ -1345,7 +1345,7 @@ kbd {
 }
 @keyframes fly-shimmer {
   0%   { background-position: -100% 0; }
-  100% { background-position:  200% 0; }
+  100% { background-position:  100% 0; }
 }
 
 /* ── Content face typography ──────────────────────────────── */
